@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Animated, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +25,18 @@ export default function TitleScreen() {
   const floatAnims = useRef(FLOATING_ANIMALS.map(() => new Animated.Value(0))).current;
   const glowAnim = useRef(new Animated.Value(0.6)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
+
+  // Generate particle positions once on mount — not on every render
+  const particles = useMemo(() =>
+    Array.from({ length: 20 }).map((_, i) => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      width: 2 + Math.random() * 3,
+      height: 2 + Math.random() * 3,
+      opacity: 0.1 + Math.random() * 0.2,
+      color: i % 3 === 0 ? COLORS.green : i % 3 === 1 ? COLORS.gold : COLORS.arctic,
+    })),
+  []);
 
   useEffect(() => {
     floatAnims.forEach((anim, i) => {
@@ -55,25 +67,28 @@ export default function TitleScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
+
+      {/* Background particles — positions stable via useMemo */}
       <View style={styles.particlesContainer}>
-        {Array.from({ length: 20 }).map((_, i) => (
+        {particles.map((p, i) => (
           <View
             key={i}
             style={[
               styles.particle,
               {
-                left: `${Math.random() * 100}%` as never,
-                top: `${Math.random() * 100}%` as never,
-                width: 2 + Math.random() * 3,
-                height: 2 + Math.random() * 3,
-                opacity: 0.1 + Math.random() * 0.2,
-                backgroundColor: i % 3 === 0 ? COLORS.green : i % 3 === 1 ? COLORS.gold : COLORS.arctic,
+                left: `${p.left}%` as never,
+                top: `${p.top}%` as never,
+                width: p.width,
+                height: p.height,
+                opacity: p.opacity,
+                backgroundColor: p.color,
               },
             ]}
           />
         ))}
       </View>
 
+      {/* Floating animal silhouettes */}
       <View style={styles.silhouettesContainer}>
         {FLOATING_ANIMALS.map((animal, i) => (
           <Animated.View
@@ -93,29 +108,25 @@ export default function TitleScreen() {
         ))}
       </View>
 
+      {/* Logo — single text with animated opacity for glow effect */}
       <View style={styles.logoSection}>
         <Animated.View style={{ transform: [{ scale: logoScale }] }}>
-          <Animated.Text
-            style={[
-              styles.logoText,
-              { opacity: glowAnim },
-            ]}
-          >
-            WILDRUN
-          </Animated.Text>
-          <RetroText
-            variant="heading"
-            color={COLORS.green}
-            style={styles.logoTextMain}
-          >
-            WILDRUN
-          </RetroText>
+          <Animated.View style={{ opacity: glowAnim }}>
+            <RetroText
+              variant="heading"
+              color={COLORS.green}
+              style={styles.logoTextMain}
+            >
+              WILDRUN
+            </RetroText>
+          </Animated.View>
         </Animated.View>
         <RetroText variant="body" color={COLORS.gray} style={styles.subtitle}>
           creature roguelite
         </RetroText>
       </View>
 
+      {/* Buttons */}
       <View style={styles.buttonsSection}>
         <TouchableOpacity
           style={styles.primaryButton}
@@ -155,6 +166,7 @@ export default function TitleScreen() {
         </View>
       </View>
 
+      {/* Stats row */}
       <View style={[styles.statsRow, { paddingBottom: insets.bottom + 12 }]}>
         <View style={styles.statItem}>
           <RetroText variant="label" color={COLORS.grayDark} style={styles.statLabel}>
@@ -213,19 +225,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 40,
-  },
-  logoText: {
-    fontFamily: 'PressStart2P_400Regular',
-    fontSize: 32,
-    color: COLORS.greenGlow,
-    textShadowColor: COLORS.green,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    textAlign: 'center' as const,
   },
   logoTextMain: {
     fontSize: 32,

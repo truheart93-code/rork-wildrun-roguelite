@@ -188,6 +188,7 @@ export default function DungeonMapScreen() {
         contentContainerStyle={[styles.mapContent, { height: mapHeight }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Connector lines */}
         <Svg
           width={MAP_CONTENT_WIDTH}
           height={mapHeight}
@@ -200,11 +201,8 @@ export default function DungeonMapScreen() {
               if (!from || !to) return null;
 
               const fromVisited = room.status === 'visited';
-              const toAvailable = run.dungeonRooms.find(r => r.id === targetId)?.status === 'available';
-              const toVisited = run.dungeonRooms.find(r => r.id === targetId)?.status === 'visited';
-              const toCurrent = run.dungeonRooms.find(r => r.id === targetId)?.status === 'current';
-
-              const isActive = fromVisited && (toAvailable || toVisited || toCurrent);
+              const toStatus = run.dungeonRooms.find(r => r.id === targetId)?.status;
+              const isActive = fromVisited && (toStatus === 'available' || toStatus === 'visited' || toStatus === 'current');
               const lineColor = isActive ? biomeColor + '80' : '#1a1e1c';
 
               return (
@@ -224,13 +222,16 @@ export default function DungeonMapScreen() {
           )}
         </Svg>
 
+        {/* Room nodes */}
         {nodePositions.map(({ x, y, room }) => {
-          const color = ROOM_COLORS[room.type];
           const isAvailable = room.status === 'available';
           const isVisited = room.status === 'visited';
           const isCurrent = room.status === 'current';
+          const isLocked = room.status === 'locked';
+          const isRevealed = isAvailable || isVisited || isCurrent;
           const isBoss = room.type === 'boss';
           const size = isBoss ? BOSS_NODE_SIZE : NODE_SIZE;
+          const color = ROOM_COLORS[room.type];
 
           return (
             <Animated.View
@@ -246,34 +247,44 @@ export default function DungeonMapScreen() {
                 isAvailable && { transform: [{ scale: pulseAnim }] },
               ]}
             >
-              <TouchableOpacity
-                style={[
-                  styles.roomNode,
-                  isBoss && styles.bossNode,
-                  { borderColor: color, width: size, height: size },
-                  isAvailable && {
-                    backgroundColor: color + '28',
-                    shadowColor: color,
-                    shadowOpacity: 0.6,
-                    shadowRadius: 10,
-                    ...(Platform.OS === 'android' ? { elevation: 6 } : {}),
-                  },
-                  isCurrent && { backgroundColor: color + '40', borderWidth: 3 },
-                  isVisited && { opacity: 0.35 },
-                ]}
-                onPress={() => handleRoomPress(room.id)}
-                disabled={!isAvailable}
-                activeOpacity={0.7}
-              >
-                <RoomIcon type={room.type} />
-                <RetroText
-                  variant="label"
-                  color={isVisited ? COLORS.grayDark : COLORS.white}
-                  style={styles.roomLabel}
+              {isLocked ? (
+                /* Mystery node — locked rooms are hidden */
+                <View style={[styles.roomNode, styles.hiddenNode, { width: size, height: size }]}>
+                  <RetroText variant="heading" color={COLORS.grayDark} style={styles.questionMark}>
+                    ?
+                  </RetroText>
+                </View>
+              ) : (
+                /* Revealed node — available, current, or visited */
+                <TouchableOpacity
+                  style={[
+                    styles.roomNode,
+                    isBoss && styles.bossNode,
+                    { borderColor: color, width: size, height: size },
+                    isAvailable && {
+                      backgroundColor: color + '28',
+                      shadowColor: color,
+                      shadowOpacity: 0.6,
+                      shadowRadius: 10,
+                      ...(Platform.OS === 'android' ? { elevation: 6 } : {}),
+                    },
+                    isCurrent && { backgroundColor: color + '40', borderWidth: 3 },
+                    isVisited && { opacity: 0.35 },
+                  ]}
+                  onPress={() => handleRoomPress(room.id)}
+                  disabled={!isAvailable}
+                  activeOpacity={0.7}
                 >
-                  {ROOM_LABELS[room.type]}
-                </RetroText>
-              </TouchableOpacity>
+                  <RoomIcon type={room.type} />
+                  <RetroText
+                    variant="label"
+                    color={isVisited ? COLORS.grayDark : COLORS.white}
+                    style={styles.roomLabel}
+                  >
+                    {ROOM_LABELS[room.type]}
+                  </RetroText>
+                </TouchableOpacity>
+              )}
             </Animated.View>
           );
         })}
@@ -349,6 +360,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     gap: 3,
+  },
+  hiddenNode: {
+    backgroundColor: '#0d1110',
+    borderColor: '#1a1e1c',
+    borderStyle: 'dashed' as const,
+  },
+  questionMark: {
+    fontSize: 18,
+    opacity: 0.4,
   },
   bossNode: {
     borderRadius: 16,
