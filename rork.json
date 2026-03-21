@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "WildRun",
+      "path": "expo",
+      "framework": "react-native"
+    }
+  ]
+}
