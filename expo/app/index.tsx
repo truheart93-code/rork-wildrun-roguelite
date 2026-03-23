@@ -26,7 +26,7 @@ export default function TitleScreen() {
   const glowAnim = useRef(new Animated.Value(0.6)).current;
   const logoScale = useRef(new Animated.Value(0.8)).current;
 
-  // Generate particle positions once on mount â not on every render
+  // Generate particle positions once on mount Ã¢ÂÂ not on every render
   const particles = useMemo(() =>
     Array.from({ length: 20 }).map((_, i) => ({
       left: Math.random() * 100,
@@ -68,7 +68,7 @@ export default function TitleScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
 
-      {/* Background particles â positions stable via useMemo */}
+      {/* Background particles Ã¢ÂÂ positions stable via useMemo */}
       <View style={styles.particlesContainer}>
         {particles.map((p, i) => (
           <View
@@ -108,7 +108,7 @@ export default function TitleScreen() {
         ))}
       </View>
 
-      {/* Logo â single text with animated opacity for glow effect */}
+      {/* Logo Ã¢ÂÂ single text with animated opacity for glow effect */}
       <View style={styles.logoSection}>
         <Animated.View style={{ transform: [{ scale: logoScale }] }}>
           <Animated.View style={{ opacity: glowAnim }}>
