@@ -17,6 +17,7 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.bg }, animation: 'fade' }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="intro" />
       <Stack.Screen name="starter-camp" />
       <Stack.Screen name="world-map" />
       <Stack.Screen name="dungeon-map" />
