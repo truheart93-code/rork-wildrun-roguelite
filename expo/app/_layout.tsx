@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
+import { Platform, StyleSheet, View } from "react-native";
 import { GameProvider } from "@/context/GameContext";
 import { COLORS } from "@/constants/colors";
 import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
@@ -12,6 +13,46 @@ import { BarlowCondensed_400Regular, BarlowCondensed_700Bold } from '@expo-googl
 void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+// Inject web-only CSS to constrain app to phone width and center it
+if (Platform.OS === 'web') {
+  const style = document.createElement('style');
+  style.textContent = `
+    html, body {
+      background-color: #050705 !important;
+      display: flex !important;
+      justify-content: center !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100% !important;
+      overflow: hidden !important;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(61,186,94,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61,186,94,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #root {
+      max-width: 430px !important;
+      width: 100% !important;
+      height: 100vh !important;
+      position: relative !important;
+      z-index: 1 !important;
+      box-shadow:
+        -30px 0 60px rgba(0,0,0,0.8),
+        30px 0 60px rgba(0,0,0,0.8),
+        0 0 0 1px rgba(61,186,94,0.1);
+      overflow: hidden !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 function RootLayoutNav() {
   return (
