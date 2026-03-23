@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import * as Font from "expo-font";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { GameProvider } from "@/context/GameContext";
 import { COLORS } from "@/constants/colors";
+import { useFonts, PressStart2P_400Regular } from '@expo-google-fonts/press-start-2p';
+import { BarlowCondensed_400Regular, BarlowCondensed_700Bold } from '@expo-google-fonts/barlow-condensed';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -14,13 +15,7 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: COLORS.bg },
-        animation: 'fade',
-      }}
-    >
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.bg }, animation: 'fade' }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="starter-camp" />
       <Stack.Screen name="world-map" />
@@ -36,28 +31,19 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [fontsLoaded, fontError] = useFonts({
+    PressStart2P_400Regular,
+    BarlowCondensed_400Regular,
+    BarlowCondensed_700Bold,
+  });
 
   useEffect(() => {
-    Font.loadAsync({
-      PressStart2P_400Regular: 'https://fonts.gstatic.com/s/pressstart2p/v15/e3t4euO8T-267oIAQAu6jDQyK3nVivNm4I81.ttf',
-      BarlowCondensed_400Regular: 'https://fonts.gstatic.com/s/barlowcondensed/v12/HTx3L3I-JCGChYJ8VI-L6OO_au7B6xTrF3DWvIMHYrtUxg.ttf',
-      BarlowCondensed_700Bold: 'https://fonts.gstatic.com/s/barlowcondensed/v12/HTxxL3I-JCGChYJ8VI-L6OO_au7B4-7z_04gGnGlaQ.ttf',
-    })
-      .then(() => setFontsLoaded(true))
-      .catch((e) => {
-        console.log('Font loading error:', e);
-        setFontsLoaded(true);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded || fontError) {
       void SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>
