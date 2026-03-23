@@ -17,6 +17,8 @@ export function createAnimalFromTemplate(template: AnimalTemplate, upgrades?: Up
     currentHp: maxHp,
     maxHp,
     level: 1,
+    xp: 0,
+    xpToNext: 20,
     atk: template.atk + (atkBonus * 2),
   };
 }
@@ -33,6 +35,8 @@ export function createEnemyAnimal(biome: string, floor: number, isBoss: boolean)
     currentHp: maxHp,
     maxHp,
     level: 1 + levelBonus,
+    xp: 0,
+    xpToNext: 20,
     atk: Math.round((template.atk + levelBonus * 2) * (isBoss ? 1.3 : 1)),
     def: Math.round((template.def + levelBonus) * (isBoss ? 1.2 : 1)),
     spd: template.spd + levelBonus,
