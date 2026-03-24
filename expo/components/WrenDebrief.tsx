@@ -9,28 +9,37 @@ import AnimalSilhouette from '@/components/AnimalSilhouette';
 import { Trophy, Skull } from 'lucide-react-native';
 
 interface DebriefProps {
-  stats: RunStats;
+  stats: Partial<RunStats> | undefined;
   skullsEarned: number;
   totalSkulls: number;
   victory: boolean;
   onContinue: () => void;
 }
 
-function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: number): string[] {
+function generateWrenLines(rawStats: Partial<RunStats> | undefined, victory: boolean, skullsEarned: number): string[] {
+  const stats: RunStats = {
+    floorsCleared: 0, animalsCaught: 0, claws: 0,
+    totalDamageDealt: 0, totalDamageTaken: 0, criticalHits: 0,
+    totalAttacks: 0, biggestHit: 0, biggestHitAnimal: '',
+    longestStreak: 0, currentStreak: 0, biomesVisited: [],
+    animalKOs: 0, favoriteAnimal: '', totalBondAttempts: 0,
+    successfulBonds: 0, turnsPlayed: 0,
+    ...(rawStats ?? {}),
+  };
   const lines: string[] = [];
   if (victory) {
     lines.push("Extraordinary. You've cleared all four biomes. The data we've collected is unprecedented.");
   } else if (stats.floorsCleared === 0) {
     lines.push("That was... brief. But every expedition teaches us something. Even the short ones.");
   } else if (stats.floorsCleared < 3) {
-    lines.push("A rough outing. The wilderness doesn't give second chances — but we do. That's what the Field Store is for.");
+    lines.push("A rough outing. The wilderness doesn't give second chances â but we do. That's what the Field Store is for.");
   } else {
     lines.push(stats.floorsCleared + " floors. Not bad at all. You pushed deep into territory most researchers never reach.");
   }
   if (stats.criticalHits > 5) {
     lines.push(stats.criticalHits + " critical hits! Your timing is exceptional. The creatures barely knew what hit them.");
   } else if (stats.criticalHits > 0) {
-    lines.push(stats.criticalHits + " critical hit" + (stats.criticalHits > 1 ? 's' : '') + ". Keep reading your opponents — you'll land more.");
+    lines.push(stats.criticalHits + " critical hit" + (stats.criticalHits > 1 ? 's' : '') + ". Keep reading your opponents â you'll land more.");
   }
   if (stats.biggestHit > 0) {
     lines.push("Biggest hit: " + stats.biggestHit + " damage from " + (stats.biggestHitAnimal || 'your squad') + ". That's the kind of power that clears boss rooms.");
@@ -39,7 +48,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
     const bondPct = Math.round((stats.successfulBonds / stats.totalBondAttempts) * 100);
     lines.push("Bond success rate: " + bondPct + "%. " + (bondPct >= 70 ? "Remarkable instincts." : bondPct >= 40 ? "Room to improve, but solid effort." : "Bonding is an art. Keep at it."));
   } else if (stats.totalBondAttempts === 0) {
-    lines.push("You didn't attempt a single bond this run. Remember — catching creatures is how we build the Field Journal.");
+    lines.push("You didn't attempt a single bond this run. Remember â catching creatures is how we build the Field Journal.");
   }
   if (stats.totalDamageTaken === 0 && stats.floorsCleared > 0) {
     lines.push("You took zero damage. Flawless field work. I'm genuinely impressed.");
@@ -52,7 +61,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
   if (stats.biomesVisited.length > 1) {
     lines.push("You explored " + stats.biomesVisited.join(', ') + ". A well-rounded expedition.");
   } else if (stats.biomesVisited.length === 1) {
-    lines.push("You only reached the " + stats.biomesVisited[0] + ". Three more biomes await — each with creatures we've never catalogued.");
+    lines.push("You only reached the " + stats.biomesVisited[0] + ". Three more biomes await â each with creatures we've never catalogued.");
   }
   if (victory) {
     lines.push("The Field Journal grows. But there's always more to discover. Rest up, researcher. The wild never sleeps.");
@@ -175,7 +184,7 @@ export default function WrenDebrief({ stats, skullsEarned, totalSkulls, victory,
         </View>
         <TouchableOpacity style={[styles.nextBtn, { backgroundColor: victory ? COLORS.green : COLORS.red }]} onPress={handleNext} activeOpacity={0.8}>
           <RetroText variant="label" color={COLORS.bg} style={styles.nextText}>
-            {typing ? 'SKIP ›' : isLast ? 'RETURN TO TITLE →' : 'NEXT →'}
+            {typing ? 'SKIP âº' : isLast ? 'RETURN TO TITLE â' : 'NEXT â'}
           </RetroText>
         </TouchableOpacity>
       </Animated.View>
