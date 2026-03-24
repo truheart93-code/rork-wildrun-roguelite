@@ -9,12 +9,30 @@ import RetroText from '@/components/RetroText';
 import SquadSlots from '@/components/SquadSlots';
 import { Lock, ChevronRight, Map } from 'lucide-react-native';
 
+
+const BIOME_LORE: Record<string, string> = {
+  savanna: "Vast open plains where speed and strength rule. Lions, cheetahs, and elephants compete for dominance. Dr. Wren's Tip: bring fast creatures — slow ones get left behind.",
+  ocean: "The deep holds ancient creatures with high HP and surprising intelligence. Orcas coordinate attacks. Dr. Wren's Tip: high DEF animals survive here longer.",
+  jungle: "Dense canopy where poison and ambush tactics thrive. Visibility is low, danger is high. Dr. Wren's Tip: Anacondas and frogs use status effects — plan around them.",
+  arctic: "Frozen tundra where only the toughest survive. Bosses here stun and freeze. Dr. Wren's Tip: bring a healer or high-SPD creature to act first.",
+};
 export default function WorldMapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { run, meta, enterBiome } = useGame();
+  const [loreBiome, setLoreBiome] = React.useState<string | null>(null);
 
   const handleSelectBiome = (index: number) => {
+    const biome = BIOMES[index];
+    if (!run.biomesCleared[index]) {
+      setLoreBiome(biome.type);
+      return;
+    }
+    enterBiome(index);
+    router.push('/dungeon-map');
+  };
+  const confirmEnterBiome = (index: number) => {
+    setLoreBiome(null);
     enterBiome(index);
     router.push('/dungeon-map');
   };
@@ -32,7 +50,7 @@ export default function WorldMapScreen() {
           WORLD MAP
         </RetroText>
         <RetroText variant="body" color={COLORS.gray} style={styles.subtitle}>
-          Floor {run.currentFloor} — Choose your next biome
+          Floor {run.currentFloor} â Choose your next biome
         </RetroText>
       </View>
 
@@ -99,6 +117,30 @@ export default function WorldMapScreen() {
       <View style={[styles.bottomSection, { paddingBottom: insets.bottom + 8 }]}>
         <SquadSlots squad={run.squad} maxSlots={meta.upgrades.squadSize} showHp />
       </View>
+      {loreBiome && (
+        <View style={styles.loreOverlay}>
+          <View style={styles.loreModal}>
+            <RetroText variant="heading" color={COLORS[loreBiome as keyof typeof COLORS] ?? COLORS.green} style={styles.loreTitle}>
+              {BIOMES.find(b => b.type === loreBiome)?.name.toUpperCase()}
+            </RetroText>
+            <RetroText variant="body" color={COLORS.whiteDim} style={styles.loreText}>
+              {BIOME_LORE[loreBiome]}
+            </RetroText>
+            <View style={styles.loreBtns}>
+              <TouchableOpacity style={styles.loreCancelBtn} onPress={() => setLoreBiome(null)} activeOpacity={0.8}>
+                <RetroText variant="label" color={COLORS.gray} style={{ fontSize: 9 }}>BACK</RetroText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.loreEnterBtn, { backgroundColor: COLORS[loreBiome as keyof typeof COLORS] ?? COLORS.green }]}
+                onPress={() => confirmEnterBiome(BIOMES.findIndex(b => b.type === loreBiome))}
+                activeOpacity={0.8}
+              >
+                <RetroText variant="label" color={COLORS.bg} style={{ fontSize: 9 }}>ENTER BIOME →</RetroText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
