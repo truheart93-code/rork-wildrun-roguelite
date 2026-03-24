@@ -138,7 +138,7 @@ function useGameState() {
       return;
     }
 
-    // Snapshot values needed in the timeout — avoids stale closure bug
+    // Snapshot values needed in the timeout â avoids stale closure bug
     const attackerName = attacker.name;
     const enemyAtk = battle.enemy.atk;
     const activeSquadIndex = battle.activeSquadIndex;
@@ -146,7 +146,7 @@ function useGameState() {
 
     setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newEnemyHp }, messages: [...prev.messages, `${attackerName} dealt ${dmgToEnemy} damage!`], turnPhase: 'enemy', damageNumbers: [...prev.damageNumbers, dmgNumber], catchChance: newCatchChance } : null);
 
-    // Enemy counterattack — reads live state from setRun updater, not stale closure
+    // Enemy counterattack â reads live state from setRun updater, not stale closure
     setTimeout(() => {
       setRun(runPrev => {
         const currentAttacker = runPrev.squad[activeSquadIndex];
@@ -280,7 +280,23 @@ function useGameState() {
     return costs[type][meta.upgrades[type]] ?? 999;
   }, [meta.upgrades]);
 
-  return { meta, run, battle, starters, metaLoaded, startNewRun, rerollStarters, selectStarter, removeStarter, enterBiome, enterRoom, completeRoom, completeBiomeFloor, attack, bond, swapAnimal, useItem, restSquad, collectTreasure, endRun, purchaseUpgrade, getUpgradeCost, setBattle };
+
+
+  const applyRelicBuff = useCallback((statKey: 'atk' | 'def' | 'hp' | 'spd', value: number) => {
+    setRun(prev => ({
+      ...prev,
+      squad: prev.squad.map(a => ({
+        ...a,
+        atk: statKey === 'atk' ? a.atk + value : a.atk,
+        def: statKey === 'def' ? a.def + value : a.def,
+        maxHp: statKey === 'hp' ? a.maxHp + value : a.maxHp,
+        currentHp: statKey === 'hp' ? Math.min(a.maxHp + value, a.currentHp + value) : a.currentHp,
+        spd: statKey === 'spd' ? a.spd + value : a.spd,
+      })),
+    }));
+  }, []);
+
+  return { meta, run, battle, starters, metaLoaded, startNewRun, rerollStarters, selectStarter, removeStarter, enterBiome, enterRoom, completeRoom, completeBiomeFloor, attack, bond, swapAnimal, useItem, restSquad, collectTreasure, endRun, purchaseUpgrade, getUpgradeCost, setBattle, applyRelicBuff };
 }
 
 export const [GameProvider, useGame] = createContextHook(useGameState);
