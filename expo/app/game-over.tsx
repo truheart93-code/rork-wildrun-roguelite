@@ -25,7 +25,18 @@ export default function GameOverScreen() {
     if (!hasEndedRun.current) {
       hasEndedRun.current = true;
       const victory = run.biomesCleared.every(b => b);
-      const stats = { ...run.stats, floorsCleared: run.floorsCleared, animalsCaught: run.animalsCaught, claws: run.claws };
+      const stats = {
+        floorsCleared: 0, animalsCaught: 0, claws: 0,
+        totalDamageDealt: 0, totalDamageTaken: 0, criticalHits: 0,
+        totalAttacks: 0, biggestHit: 0, biggestHitAnimal: '',
+        longestStreak: 0, currentStreak: 0, biomesVisited: [],
+        animalKOs: 0, favoriteAnimal: '', totalBondAttempts: 0,
+        successfulBonds: 0, turnsPlayed: 0,
+        ...(run.stats ?? {}),
+        floorsCleared: run.floorsCleared ?? 0,
+        animalsCaught: run.animalsCaught ?? 0,
+        claws: run.claws ?? 0,
+      };
       const result = endRun(victory);
       setDebriefData({
         stats,
