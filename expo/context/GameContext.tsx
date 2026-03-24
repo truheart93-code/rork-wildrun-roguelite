@@ -138,7 +138,7 @@ function useGameState() {
       return;
     }
 
-    // Snapshot values needed in the timeout â avoids stale closure bug
+    // Snapshot values needed in the timeout Ã¢ÂÂ avoids stale closure bug
     const attackerName = attacker.name;
     const enemyAtk = battle.enemy.atk;
     const activeSquadIndex = battle.activeSquadIndex;
@@ -146,7 +146,7 @@ function useGameState() {
 
     setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newEnemyHp }, messages: [...prev.messages, `${attackerName} dealt ${dmgToEnemy} damage!`], turnPhase: 'enemy', damageNumbers: [...prev.damageNumbers, dmgNumber], catchChance: newCatchChance } : null);
 
-    // Enemy counterattack â reads live state from setRun updater, not stale closure
+    // Enemy counterattack Ã¢ÂÂ reads live state from setRun updater, not stale closure
     setTimeout(() => {
       setRun(runPrev => {
         const currentAttacker = runPrev.squad[activeSquadIndex];
@@ -282,21 +282,61 @@ function useGameState() {
 
 
 
-  const applyRelicBuff = useCallback((statKey: 'atk' | 'def' | 'hp' | 'spd', value: number) => {
-    setRun(prev => ({
-      ...prev,
-      squad: prev.squad.map(a => ({
-        ...a,
-        atk: statKey === 'atk' ? a.atk + value : a.atk,
-        def: statKey === 'def' ? a.def + value : a.def,
-        maxHp: statKey === 'hp' ? a.maxHp + value : a.maxHp,
-        currentHp: statKey === 'hp' ? Math.min(a.maxHp + value, a.currentHp + value) : a.currentHp,
-        spd: statKey === 'spd' ? a.spd + value : a.spd,
-      })),
-    }));
-  }, []);
+  const useAbility = useCallback(() => {
+    if (!battle || battle.turnPhase !== 'player') return;
+    const attacker = run.squad[battle.activeSquadIndex];
+    if (!attacker || attacker.currentHp <= 0) return;
+    const { ANIMALS } = require('@/constants/animals');
+    const animalData = ANIMALS.find((a: any) => a.id === attacker.id);
+    const ability = animalData?.ability;
+    if (!ability || attacker.level < ability.unlockLevel) return;
+    let msg = attacker.name + ' used ' + ability.name + '!';
+    const enemyAtk = battle.enemy.atk;
+    const activeIdx = battle.activeSquadIndex;
+    if (ability.effect === 'heal') {
+      const newHp = Math.min(attacker.maxHp, attacker.currentHp + ability.value);
+      setRun(prev => ({ ...prev, squad: prev.squad.map((a,i) => i === activeIdx ? { ...a, currentHp: newHp } : a) }));
+      msg += ' Healed ' + ability.value + ' HP!';
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'stun') {
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' Enemy stunned!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'trample') {
+      const dmg1 = calculateDamage(attacker.atk + (attacker.tempAtk ?? 0), battle.enemy.def);
+      const dmg2 = calculateDamage(attacker.atk + (attacker.tempAtk ?? 0), battle.enemy.def);
+      const total = dmg1 + dmg2;
+      const newHp = Math.max(0, battle.enemy.currentHp - total);
+      setRun(prev => ({ ...prev, stats: { ...prev.stats, totalDamageDealt: prev.stats.totalDamageDealt + total } }));
+      setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newHp }, messages: [...prev.messages, msg + ' Hit twice for ' + total + ' damage!'], turnPhase: newHp <= 0 ? 'victory' : 'player', rewards: newHp <= 0 ? { clawsEarned: 8 + battle.enemy.level * 4, skullsEarned: 0 } : prev.rewards } : null);
+    } else if (ability.effect === 'poison') {
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' Enemy poisoned for ' + ability.value + ' dmg/turn!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'shield') {
+      setRun(prev => ({ ...prev, squad: prev.squad.map((a,i) => i === activeIdx ? { ...a, tempDef: (a.tempDef ?? 0) + Math.floor(a.def * 0.5) } : a) }));
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' Defense boosted!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'ink') {
+      setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, atk: Math.max(1, prev.enemy.atk - 5) }, messages: [...prev.messages, msg + ' Enemy ATK reduced!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'sprint') {
+      setRun(prev => ({ ...prev, squad: prev.squad.map((a,i) => i === activeIdx ? { ...a, tempSpd: (a.tempSpd ?? 0) + ability.value } : a) }));
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' SPD +' + ability.value + '!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'camouflage') {
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' Enemy will miss next attack!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'double_hit') {
+      const dmg = calculateDamage((attacker.atk + (attacker.tempAtk ?? 0)) * 2, battle.enemy.def);
+      const newHp = Math.max(0, battle.enemy.currentHp - dmg);
+      setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newHp }, messages: [...prev.messages, msg + ' Ambush strike: ' + dmg + ' damage!'], turnPhase: newHp <= 0 ? 'victory' : 'player', rewards: newHp <= 0 ? { clawsEarned: 8 + battle.enemy.level * 4, skullsEarned: 0 } : prev.rewards } : null);
+    } else if (ability.effect === 'echo') {
+      setRun(prev => ({ ...prev, squad: prev.squad.map((a,i) => i === activeIdx ? { ...a, tempAtk: (a.tempAtk ?? 0) + ability.value } : a) }));
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' ATK +' + ability.value + '!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'current') {
+      setRun(prev => ({ ...prev, squad: prev.squad.map((a,i) => i === activeIdx ? { ...a, tempSpd: (a.tempSpd ?? 0) + ability.value } : a) }));
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg + ' SPD +' + ability.value + '!'], turnPhase: 'player' } : null);
+    } else if (ability.effect === 'rage') {
+      const bonusDmg = calculateDamage((attacker.atk + (attacker.tempAtk ?? 0)) * 1.8, battle.enemy.def);
+      const newHp = Math.max(0, battle.enemy.currentHp - bonusDmg);
+      setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newHp }, messages: [...prev.messages, msg + ' Dealt ' + bonusDmg + ' damage!'], turnPhase: newHp <= 0 ? 'victory' : 'player', rewards: newHp <= 0 ? { clawsEarned: 8 + battle.enemy.level * 4, skullsEarned: 0 } : prev.rewards } : null);
+    }
+  }, [battle, run.squad, run.bondAttemptsRemaining]);
 
-  return { meta, run, battle, starters, metaLoaded, startNewRun, rerollStarters, selectStarter, removeStarter, enterBiome, enterRoom, completeRoom, completeBiomeFloor, attack, bond, swapAnimal, useItem, restSquad, collectTreasure, endRun, purchaseUpgrade, getUpgradeCost, setBattle, applyRelicBuff };
+  return { meta, run, battle, starters, metaLoaded, startNewRun, rerollStarters, selectStarter, removeStarter, enterBiome, enterRoom, completeRoom, completeBiomeFloor, attack, bond, swapAnimal, useItem, restSquad, collectTreasure, endRun, purchaseUpgrade, getUpgradeCost, setBattle, applyRelicBuff, useAbility };
 }
 
 export const [GameProvider, useGame] = createContextHook(useGameState);
