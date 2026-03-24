@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { Animal, AnimalTemplate, BattleState, DamageNumber, MetaState, RunState, Upgrades } from '@/constants/types';
-import { getStarterAnimals } from '@/constants/animals';
+import { getStarterAnimals, ANIMALS } from '@/constants/animals';
 import { getRandomItem } from '@/constants/items';
 import { createAnimalFromTemplate, createEnemyAnimal, generateDungeon, calculateDamage, calculateCatchChance, rollCatch, generateUniqueId } from '@/utils/gameUtils';
 
@@ -138,7 +138,7 @@ function useGameState() {
       return;
     }
 
-    // Snapshot values needed in the timeout Ã¢ÂÂ avoids stale closure bug
+    // Snapshot values needed in the timeout ÃÂ¢ÃÂÃÂ avoids stale closure bug
     const attackerName = attacker.name;
     const enemyAtk = battle.enemy.atk;
     const activeSquadIndex = battle.activeSquadIndex;
@@ -146,7 +146,7 @@ function useGameState() {
 
     setBattle(prev => prev ? { ...prev, enemy: { ...prev.enemy, currentHp: newEnemyHp }, messages: [...prev.messages, `${attackerName} dealt ${dmgToEnemy} damage!`], turnPhase: 'enemy', damageNumbers: [...prev.damageNumbers, dmgNumber], catchChance: newCatchChance } : null);
 
-    // Enemy counterattack Ã¢ÂÂ reads live state from setRun updater, not stale closure
+    // Enemy counterattack ÃÂ¢ÃÂÃÂ reads live state from setRun updater, not stale closure
     setTimeout(() => {
       setRun(runPrev => {
         const currentAttacker = runPrev.squad[activeSquadIndex];
@@ -286,7 +286,6 @@ function useGameState() {
     if (!battle || battle.turnPhase !== 'player') return;
     const attacker = run.squad[battle.activeSquadIndex];
     if (!attacker || attacker.currentHp <= 0) return;
-    const { ANIMALS } = require('@/constants/animals');
     const animalData = ANIMALS.find((a: any) => a.id === attacker.id);
     const ability = animalData?.ability;
     if (!ability || attacker.level < ability.unlockLevel) return;
