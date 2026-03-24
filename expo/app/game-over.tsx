@@ -40,8 +40,8 @@ export default function GameOverScreen() {
       const result = endRun(victory);
       setDebriefData({
         stats,
-        skullsEarned: result.skullsEarned,
-        totalSkulls: meta.skulls + result.skullsEarned,
+        skullsEarned: result?.skullsEarned ?? 0,
+        totalSkulls: (meta.skulls ?? 0) + (result?.skullsEarned ?? 0),
         victory,
       });
     }
