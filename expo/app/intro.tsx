@@ -11,7 +11,7 @@ const { width: W } = Dimensions.get('window');
 const DIALOGUE = [
   {
     speaker: 'DR. WREN',
-    text: "Ah, you're finally here. I'm Dr. Wren â field biologist, naturalist, and apparently the only person willing to venture into these territories.",
+    text: "Ah, you're finally here. I'm Dr. Wren Ã¢ÂÂ field biologist, naturalist, and apparently the only person willing to venture into these territories.",
     highlight: null,
   },
   {
@@ -21,12 +21,12 @@ const DIALOGUE = [
   },
   {
     speaker: 'DR. WREN',
-    text: "Your mission is to travel through these biomes, fight wild creatures to weaken them, then attempt to Bond with them â forming a partnership to join your squad.",
+    text: "Your mission is to travel through these biomes, fight wild creatures to weaken them, then attempt to Bond with them Ã¢ÂÂ forming a partnership to join your squad.",
     highlight: 'Bond',
   },
   {
     speaker: 'DR. WREN',
-    text: "Each biome is a dungeon â a series of rooms. Fight rooms, Catch rooms, Rest camps, Treasure chests, and at the top... a Boss.",
+    text: "Each biome is a dungeon Ã¢ÂÂ a series of rooms. Fight rooms, Catch rooms, Rest camps, Treasure chests, and at the top... a Boss.",
     highlight: 'Boss',
   },
   {
@@ -36,12 +36,12 @@ const DIALOGUE = [
   },
   {
     speaker: 'DR. WREN',
-    text: "When your creatures fall in battle and none remain standing â the run ends. But you'll earn Skulls, our research currency, to permanently upgrade for the next run.",
+    text: "When your creatures fall in battle and none remain standing Ã¢ÂÂ the run ends. But you'll earn Skulls, our research currency, to permanently upgrade for the next run.",
     highlight: 'Skulls',
   },
   {
     speaker: 'DR. WREN',
-    text: "Every creature you bond with gets added to the Field Journal â a living record of our discoveries. Fill it completely and you'll have catalogued every known species.",
+    text: "Every creature you bond with gets added to the Field Journal Ã¢ÂÂ a living record of our discoveries. Fill it completely and you'll have catalogued every known species.",
     highlight: 'Field Journal',
   },
   {
@@ -101,7 +101,7 @@ export default function IntroScreen() {
 
   const handleNext = () => {
     if (typing) {
-      // Skip typewriter â show full text
+      // Skip typewriter Ã¢ÂÂ show full text
       if (typingRef.current) clearInterval(typingRef.current);
       setDisplayedText(DIALOGUE[page].text);
       setTyping(false);
@@ -148,7 +148,7 @@ export default function IntroScreen() {
 
       {/* Skip button */}
       <TouchableOpacity style={styles.skipBtn} onPress={skip}>
-        <RetroText variant="label" color={COLORS.grayDark} style={styles.skipText}>SKIP âº</RetroText>
+        <RetroText variant="label" color={COLORS.grayDark} style={styles.skipText}>SKIP Ã¢ÂÂº</RetroText>
       </TouchableOpacity>
 
       {/* Dr. Wren scene */}
@@ -219,7 +219,7 @@ export default function IntroScreen() {
 
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext} activeOpacity={0.8}>
           <RetroText variant="label" color={COLORS.bg} style={styles.nextText}>
-            {typing ? 'SKIP âº' : isLast ? 'BEGIN â' : 'NEXT â'}
+            {typing ? 'SKIP Ã¢ÂÂº' : isLast ? 'BEGIN Ã¢ÂÂ' : 'NEXT Ã¢ÂÂ'}
           </RetroText>
         </TouchableOpacity>
       </Animated.View>
