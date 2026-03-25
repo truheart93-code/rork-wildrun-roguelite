@@ -102,7 +102,7 @@ export default function FieldJournalScreen() {
       </View>
 
       <RetroText variant="body" color={COLORS.gray} style={styles.subtitle}>
-        {meta.journal.length}/{ANIMALS.length} species documented — Dr. Wren
+        {meta.journal.length}/{ANIMALS.length} species documented - Dr. Wren
       </RetroText>
 
       {/* Biome filter tabs */}
@@ -127,7 +127,7 @@ export default function FieldJournalScreen() {
       </ScrollView>
 
       {selected && selectedAnimal ? (
-        /* Detail view — Pokédex style */
+        /* Detail view - Pokédex style */
         <View style={styles.detailContainer}>
           <TouchableOpacity style={styles.backRow} onPress={() => setSelected(null)}>
             <RetroText variant="label" color={COLORS.green} style={styles.backText}>‹ BACK</RetroText>

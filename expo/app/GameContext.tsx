@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { Animal, AnimalTemplate, BattleState, DamageNumber, MetaState, RunState, RunStats, Upgrades } from '@/constants/types';
-import { getStarterAnimals } from '@/constants/animals';
+import { getStarterAnimals, ANIMALS, getAbilityForAnimal } from '@/constants/animals';
 import { getRandomItem } from '@/constants/items';
 import { createAnimalFromTemplate, createEnemyAnimal, generateDungeon, calculateDamage, calculateCatchChance, rollCatch, generateUniqueId } from '@/utils/gameUtils';
 
@@ -30,6 +30,7 @@ const DEFAULT_META: MetaState = {
   totalRuns: 0,
   bestFloor: 0,
   skulls: 0,
+  claws: 0,
   upgrades: { squadSize: 3, bondAttempts: 2, atkBonus: 0, hpBonus: 0 },
   journal: [],
   totalCriticalHits: 0,
@@ -60,7 +61,7 @@ function xpToNextLevel(level: number): number {
   return 20 + level * 15;
 }
 
-// Roll for critical hit — 15% base chance
+// Roll for critical hit - 15% base chance
 function rollCrit(): boolean {
   return Math.random() < 0.15;
 }
@@ -147,6 +148,14 @@ function useGameState() {
       return { ...prev, dungeonRooms: rooms, currentRoomIndex: roomIndex };
     });
     const room = run.dungeonRooms[roomIndex];
+    
+    // Check if there's a saved battle state to restore
+    if (room && room.savedBattle) {
+      setBattle(room.savedBattle);
+      return;
+    }
+    
+    // Otherwise create a new battle
     if (room && (room.type === 'fight' || room.type === 'catchable' || room.type === 'boss')) {
       const biome = ['savanna', 'ocean', 'jungle', 'arctic'][run.currentBiomeIndex];
       const enemy = createEnemyAnimal(biome, run.currentFloor, room.type === 'boss');
@@ -163,15 +172,30 @@ function useGameState() {
         damageNumbers: [],
         catchChance: calculateCatchChance(enemy),
         comboCount: 0,
+        abilitiesUsed: [],
+        activeEffects: [],
       });
     }
   }, [run.dungeonRooms, run.currentBiomeIndex, run.currentFloor, run.squad]);
+
+  const leaveRoom = useCallback(() => {
+    // Save current battle state to room before leaving
+    if (battle && battle.turnPhase !== 'victory' && battle.turnPhase !== 'defeat' && battle.turnPhase !== 'caught') {
+      setRun(prev => {
+        const updated = prev.dungeonRooms.map((r, i) => 
+          i === prev.currentRoomIndex ? { ...r, savedBattle: battle } : r
+        );
+        return { ...prev, dungeonRooms: updated };
+      });
+    }
+    setBattle(null);
+  }, [battle]);
 
   const completeRoom = useCallback(() => {
     setRun(prev => {
       const currentRoom = prev.dungeonRooms[prev.currentRoomIndex];
       const updated = prev.dungeonRooms.map((r, i) => {
-        if (i === prev.currentRoomIndex) return { ...r, status: 'visited' as const };
+        if (i === prev.currentRoomIndex) return { ...r, status: 'visited' as const, savedBattle: undefined };
         if (currentRoom?.connections.includes(i)) return { ...r, status: 'available' as const };
         return r;
       });
@@ -314,7 +338,7 @@ function useGameState() {
       comboCount: newCombo,
     } : null);
 
-    // Enemy counter-attack — reads live state from setRun updater
+    // Enemy counter-attack - reads live state from setRun updater
     setTimeout(() => {
       setRun(runPrev => {
         const currentAttacker = runPrev.squad[activeSquadIndex];
@@ -374,7 +398,14 @@ function useGameState() {
     }));
 
     if (success) {
-      const caughtAnimal = createAnimalFromTemplate(battle.enemy, meta.upgrades);
+      // Find the base template for this animal (without enemy scaling)
+      const baseTemplate = ANIMALS.find(a => a.id === battle.enemy.id);
+      if (!baseTemplate) {
+        console.error('Could not find base template for enemy:', battle.enemy.id);
+        return;
+      }
+      
+      const caughtAnimal = createAnimalFromTemplate(baseTemplate, meta.upgrades);
       caughtAnimal.currentHp = Math.max(1, Math.floor(caughtAnimal.maxHp * 0.5));
       const canAddToSquad = run.squad.length < meta.upgrades.squadSize;
       const clawsEarned = 10 + Math.floor(Math.random() * 10);
@@ -460,6 +491,197 @@ function useGameState() {
     setBattle(prev => prev ? { ...prev, messages: [...prev.messages, msg] } : null);
   }, [battle, run.squad, run.items, run.dungeonRooms, run.currentRoomIndex, completeRoom]);
 
+  const useAbility = useCallback(() => {
+    if (!battle || battle.turnPhase !== 'player') return;
+    
+    const attacker = run.squad[battle.activeSquadIndex];
+    if (!attacker || attacker.currentHp <= 0) return;
+    
+    // Check if ability is unlocked
+    const ability = getAbilityForAnimal(attacker.id);
+    if (!ability || attacker.level < ability.unlockLevel) return;
+    
+    // Check if ANY ability has been used this battle (once per team)
+    if (battle.abilitiesUsed.length > 0) {
+      setBattle(prev => prev ? { ...prev, messages: [...prev.messages, 'Team ability already used this battle!'] } : null);
+      return;
+    }
+    
+    // Mark ability as used for the entire team
+    const newAbilitiesUsed = [attacker.uniqueId];
+    let msgs: string[] = [`${attacker.name} used ${ability.name}!`];
+    let newSquad = [...run.squad];
+    let newEnemy = { ...battle.enemy };
+    let newEffects = [...battle.activeEffects];
+    
+    // Apply ability effects
+    switch (ability.effect) {
+      case 'heal':
+        const healAmount = ability.value;
+        newSquad = newSquad.map((a, i) => 
+          i === battle.activeSquadIndex 
+            ? { ...a, currentHp: Math.min(a.maxHp, a.currentHp + healAmount) }
+            : a
+        );
+        msgs.push(`${attacker.name} restored ${healAmount} HP!`);
+        break;
+        
+      case 'poison':
+        newEffects.push({ type: 'poison', value: ability.value, duration: 3, targetIsEnemy: true });
+        msgs.push(`${battle.enemy.name} is poisoned!`);
+        break;
+        
+      case 'shield':
+        newEffects.push({ type: 'shield', value: ability.value, duration: 1, targetIsEnemy: false });
+        msgs.push(`${attacker.name} raised a shield!`);
+        break;
+        
+      case 'sprint':
+        newSquad = newSquad.map((a, i) => 
+          i === battle.activeSquadIndex 
+            ? { ...a, tempSpd: (a.tempSpd ?? 0) + ability.value }
+            : a
+        );
+        newEffects.push({ type: 'sprint', value: ability.value, duration: 2, targetIsEnemy: false });
+        msgs.push(`${attacker.name}'s SPD rose by ${ability.value}!`);
+        break;
+        
+      case 'ink':
+        // ink is used for both ATK reduction and DEF reduction
+        // Positive value = reduce enemy ATK, Negative value = reduce enemy DEF
+        if (ability.value > 0) {
+          newEnemy = { ...newEnemy, tempAtk: (newEnemy.tempAtk ?? 0) - ability.value };
+          newEffects.push({ type: 'ink', value: ability.value, duration: 2, targetIsEnemy: true });
+          msgs.push(`${battle.enemy.name}'s ATK fell by ${ability.value}!`);
+        } else {
+          const defReduction = Math.abs(ability.value);
+          newEnemy = { ...newEnemy, tempDef: (newEnemy.tempDef ?? 0) - defReduction };
+          newEffects.push({ type: 'ink', value: ability.value, duration: 2, targetIsEnemy: true });
+          msgs.push(`${battle.enemy.name}'s DEF fell by ${defReduction}!`);
+        }
+        break;
+        
+      case 'current':
+        newSquad = newSquad.map((a, i) => 
+          i === battle.activeSquadIndex 
+            ? { ...a, tempSpd: (a.tempSpd ?? 0) + ability.value }
+            : a
+        );
+        newEffects.push({ type: 'current', value: ability.value, duration: 2, targetIsEnemy: false });
+        msgs.push(`${attacker.name}'s SPD rose by ${ability.value}!`);
+        break;
+        
+      case 'camouflage':
+        newEffects.push({ type: 'camouflage', value: 1, duration: 1, targetIsEnemy: false });
+        msgs.push(`${attacker.name} vanished from sight!`);
+        break;
+        
+      case 'rage':
+        // Rage gives ATK boost - Gorilla gets +6 ATK
+        newSquad = newSquad.map((a, i) => 
+          i === battle.activeSquadIndex 
+            ? { ...a, tempAtk: (a.tempAtk ?? 0) + ability.value }
+            : a
+        );
+        msgs.push(`${attacker.name}'s ATK rose by ${ability.value}!`);
+        // Gorilla also reduces enemy DEF by 4
+        if (attacker.id === 'gorilla') {
+          newEnemy = { ...newEnemy, tempDef: (newEnemy.tempDef ?? 0) - 4 };
+          msgs.push(`${battle.enemy.name}'s DEF fell by 4!`);
+        }
+        break;
+        
+      case 'echo':
+        // Orca's echolocation - boost next hit
+        newSquad = newSquad.map((a, i) => 
+          i === battle.activeSquadIndex 
+            ? { ...a, tempAtk: (a.tempAtk ?? 0) + ability.value }
+            : a
+        );
+        msgs.push(`${attacker.name} charged up power!`);
+        break;
+        
+      case 'double_hit':
+      case 'trample':
+        // These trigger during attack, just show message
+        msgs.push(`${attacker.name} is ready to strike!`);
+        break;
+    }
+    
+    setRun(prev => ({ ...prev, squad: newSquad }));
+    
+    // Ability use ends player's turn - enemy attacks
+    setBattle(prev => prev ? {
+      ...prev,
+      enemy: newEnemy,
+      messages: [...prev.messages, ...msgs],
+      turnPhase: 'enemy',
+      abilitiesUsed: newAbilitiesUsed,
+      activeEffects: newEffects,
+    } : null);
+    
+    // Enemy counter-attack (same logic as attack function)
+    setTimeout(() => {
+      setRun(runPrev => {
+        const currentAttacker = runPrev.squad[battle.activeSquadIndex];
+        if (!currentAttacker || currentAttacker.currentHp <= 0) {
+          setBattle(b => b ? { ...b, turnPhase: 'player' } : null);
+          return runPrev;
+        }
+        
+        // Check for camouflage effect
+        const hasCamo = newEffects.some(e => e.type === 'camouflage' && !e.targetIsEnemy);
+        if (hasCamo) {
+          setBattle(b => b ? {
+            ...b,
+            messages: [...b.messages, `${battle.enemy.name} attacked but missed!`],
+            turnPhase: 'player',
+            activeEffects: b.activeEffects.filter(e => e.type !== 'camouflage'),
+          } : null);
+          return runPrev;
+        }
+        
+        const effectiveDef = currentAttacker.def + (currentAttacker.tempDef ?? 0);
+        const dmgToPlayer = calculateDamage(newEnemy.atk + (newEnemy.tempAtk ?? 0), effectiveDef);
+        
+        // Apply shield reduction if present
+        const shieldEffect = newEffects.find(e => e.type === 'shield' && !e.targetIsEnemy);
+        const finalDmg = shieldEffect ? Math.floor(dmgToPlayer * (1 - shieldEffect.value / 100)) : dmgToPlayer;
+        
+        const newPlayerHp = Math.max(0, currentAttacker.currentHp - finalDmg);
+        const playerDmgNumber: DamageNumber = { id: generateUniqueId(), value: finalDmg, isPlayer: true, timestamp: Date.now() };
+        const newSquadAfterDmg = runPrev.squad.map((a, i) => i === battle.activeSquadIndex ? { ...a, currentHp: newPlayerHp } : a);
+        const allDead = newSquadAfterDmg.every(a => a.currentHp <= 0);
+        const needSwap = newPlayerHp <= 0 && !allDead;
+        const nextAlive = needSwap ? newSquadAfterDmg.findIndex(a => a.currentHp > 0) : battle.activeSquadIndex;
+        const counterMsgs: string[] = [`${currentAttacker.name} took ${finalDmg} damage!`];
+        if (shieldEffect) counterMsgs.push('Shield absorbed some damage!');
+        if (newPlayerHp <= 0) counterMsgs.push(`${currentAttacker.name} fainted!`);
+        if (needSwap && newSquadAfterDmg[nextAlive]) counterMsgs.push(`${newSquadAfterDmg[nextAlive].name} steps in!`);
+        
+        setBattle(b => b ? {
+          ...b,
+          messages: [...b.messages, ...counterMsgs],
+          turnPhase: allDead ? 'defeat' : 'player',
+          activeSquadIndex: needSwap ? nextAlive : battle.activeSquadIndex,
+          damageNumbers: [...b.damageNumbers, playerDmgNumber],
+          activeEffects: b.activeEffects.filter(e => e.type !== 'shield'),
+        } : null);
+        
+        return {
+          ...runPrev,
+          squad: newSquadAfterDmg,
+          winStreak: allDead ? 0 : runPrev.winStreak,
+          stats: {
+            ...runPrev.stats,
+            totalDamageTaken: runPrev.stats.totalDamageTaken + finalDmg,
+            currentStreak: allDead ? 0 : runPrev.stats.currentStreak,
+          },
+        };
+      });
+    }, 900);
+  }, [battle, run.squad]);
+
   const restSquad = useCallback(() => {
     setRun(prev => ({
       ...prev,
@@ -487,6 +709,7 @@ function useGameState() {
     saveMeta({
       ...meta,
       skulls: meta.skulls + skullsEarned,
+      claws: meta.claws + run.claws,
       bestFloor: newBestFloor,
       totalCriticalHits: (meta.totalCriticalHits ?? 0) + run.stats.criticalHits,
       longestWinStreak: newLongestStreak,
@@ -514,8 +737,8 @@ function useGameState() {
   return {
     meta, run, battle, starters, metaLoaded,
     startNewRun, rerollStarters, selectStarter, removeStarter,
-    enterBiome, enterRoom, completeRoom, completeBiomeFloor,
-    attack, bond, swapAnimal, useItem,
+    enterBiome, enterRoom, leaveRoom, completeRoom, completeBiomeFloor,
+    attack, bond, swapAnimal, useItem, useAbility,
     restSquad, collectTreasure, endRun,
     purchaseUpgrade, getUpgradeCost,
     setBattle, grantXp,

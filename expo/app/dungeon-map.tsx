@@ -248,14 +248,14 @@ export default function DungeonMapScreen() {
               ]}
             >
               {isLocked ? (
-                /* Mystery node — locked rooms are hidden */
+                /* Mystery node - locked rooms are hidden */
                 <View style={[styles.roomNode, styles.hiddenNode, { width: size, height: size }]}>
                   <RetroText variant="heading" color={COLORS.grayDark} style={styles.questionMark}>
                     ?
                   </RetroText>
                 </View>
               ) : (
-                /* Revealed node — available, current, or visited */
+                /* Revealed node - available, current, or visited */
                 <TouchableOpacity
                   style={[
                     styles.roomNode,

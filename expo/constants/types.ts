@@ -35,6 +35,7 @@ export interface DungeonRoom {
   col: number;
   connections: number[];
   enemyId?: string;
+  savedBattle?: BattleState;
 }
 
 export interface ItemTemplate {
@@ -85,6 +86,7 @@ export interface DamageNumber {
   isCrit?: boolean;
 }
 
+// Detailed run statistics for Dr. Wren debrief
 export interface RunStats {
   floorsCleared: number;
   animalsCaught: number;
@@ -126,6 +128,7 @@ export interface MetaState {
   totalRuns: number;
   bestFloor: number;
   skulls: number;
+  claws: number;
   upgrades: Upgrades;
   journal: string[];
   totalCriticalHits: number;

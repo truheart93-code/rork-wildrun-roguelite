@@ -11,12 +11,12 @@ import RetroText from '@/components/RetroText';
 import AnimalSilhouette from '@/components/AnimalSilhouette';
 import HpBar from '@/components/HpBar';
 import SquadSlots from '@/components/SquadSlots';
-import { Swords, Heart, Package, ArrowLeftRight, Skull, Trophy, UserPlus, Sparkles } from 'lucide-react-native';
+import { Swords, Heart, Package, ArrowLeftRight, Skull, Trophy, UserPlus, Sparkles, ChevronLeft } from 'lucide-react-native';
 
 export default function BattleScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { run, battle, attack, bond, swapAnimal, useItem, completeRoom, useAbility } = useGame();
+  const { run, battle, attack, bond, swapAnimal, useItem, completeRoom, leaveRoom, useAbility } = useGame();
 
   const playerShake = useRef(new Animated.Value(0)).current;
   const enemyShake = useRef(new Animated.Value(0)).current;
@@ -112,6 +112,15 @@ export default function BattleScreen() {
 
   return (
     <View style={[styles.container,{paddingTop:insets.top}]}>
+      {!isOver && (
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => { leaveRoom(); router.back(); }}
+          activeOpacity={0.8}
+        >
+          <ChevronLeft size={20} color={COLORS.white} />
+        </TouchableOpacity>
+      )}
       <View style={styles.battleScene}>
         <LinearGradient colors={biomeGradients[battle.enemy.biome]} locations={[0,0.3,0.7,1]} style={StyleSheet.absoluteFill}/>
         <View style={[styles.atmosphereGlow,{backgroundColor:enemyBiomeColor+'18'}]}/>
@@ -179,6 +188,7 @@ export default function BattleScreen() {
 
 const styles = StyleSheet.create({
   container:{flex:1,backgroundColor:COLORS.bg},
+  backButton:{position:'absolute',top:12,left:12,zIndex:100,backgroundColor:'rgba(0,0,0,0.6)',borderRadius:8,padding:8,borderWidth:1,borderColor:'rgba(255,255,255,0.1)'},
   battleScene:{flex:1,position:'relative',overflow:'hidden',minHeight:260},
   atmosphereGlow:{position:'absolute',top:0,left:0,right:0,height:'60%',opacity:0.5},
   ground:{position:'absolute',bottom:0,left:0,right:0,height:80},

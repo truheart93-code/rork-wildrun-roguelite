@@ -148,7 +148,7 @@ export default function FieldStoreScreen() {
     }
     // Track purchased (actual item injection would be in GameContext)
     setPurchased(p => [...p, item.id]);
-    showNotif(`${item.label} — ready for next run!`);
+    showNotif(`${item.label} - ready for next run!`);
   };
 
   return (
@@ -166,7 +166,7 @@ export default function FieldStoreScreen() {
 
       {/* Dr. Wren tagline */}
       <RetroText variant="body" color={COLORS.grayDark} style={styles.tagline}>
-        "Invest in your research. The wilderness won't wait." — Dr. Wren
+        "Invest in your research. The wilderness won't wait." - Dr. Wren
       </RetroText>
 
       {/* Currency display */}

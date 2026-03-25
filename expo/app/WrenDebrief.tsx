@@ -26,7 +26,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
   } else if (stats.floorsCleared === 0) {
     lines.push("That was... brief. But every expedition teaches us something. Even the short ones.");
   } else if (stats.floorsCleared < 3) {
-    lines.push("A rough outing. The wilderness doesn't give second chances — but we do. That's what the Field Store is for.");
+    lines.push("A rough outing. The wilderness doesn't give second chances - but we do. That's what the Field Store is for.");
   } else {
     lines.push(`${stats.floorsCleared} floors. Not bad at all. You pushed deep into territory most researchers never reach.`);
   }
@@ -35,7 +35,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
   if (stats.criticalHits > 5) {
     lines.push(`${stats.criticalHits} critical hits! Your timing is exceptional. The creatures barely knew what hit them.`);
   } else if (stats.criticalHits > 0) {
-    lines.push(`${stats.criticalHits} critical hit${stats.criticalHits > 1 ? 's' : ''}. Keep reading your opponents — you'll land more.`);
+    lines.push(`${stats.criticalHits} critical hit${stats.criticalHits > 1 ? 's' : ''}. Keep reading your opponents - you'll land more.`);
   }
 
   if (stats.biggestHit > 0) {
@@ -47,7 +47,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
     const bondPct = Math.round((stats.successfulBonds / stats.totalBondAttempts) * 100);
     lines.push(`Bond success rate: ${bondPct}%. ${bondPct >= 70 ? "Remarkable instincts." : bondPct >= 40 ? "Room to improve, but solid effort." : "Bonding is an art. Keep at it."}`);
   } else if (stats.totalBondAttempts === 0) {
-    lines.push("You didn't attempt a single bond this run. Remember — catching creatures is how we build the Field Journal.");
+    lines.push("You didn't attempt a single bond this run. Remember - catching creatures is how we build the Field Journal.");
   }
 
   // Damage taken
@@ -66,7 +66,7 @@ function generateWrenLines(stats: RunStats, victory: boolean, skullsEarned: numb
   if (stats.biomesVisited.length > 1) {
     lines.push(`You explored ${stats.biomesVisited.join(', ')}. A well-rounded expedition.`);
   } else if (stats.biomesVisited.length === 1) {
-    lines.push(`You only reached the ${stats.biomesVisited[0]}. Three more biomes await — each with creatures we've never catalogued.`);
+    lines.push(`You only reached the ${stats.biomesVisited[0]}. Three more biomes await - each with creatures we've never catalogued.`);
   }
 
   // Motivation for next run
