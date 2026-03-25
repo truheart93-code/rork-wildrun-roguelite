@@ -127,7 +127,6 @@ export default function FieldStoreScreen() {
   const insets = useSafeAreaInsets();
   const { meta, run, purchaseUpgrade, purchaseWithClaws, getUpgradeCost } = useGame();
   const [activeTab, setActiveTab] = useState<'upgrades' | 'supplies'>('upgrades');
-  const [purchased, setPurchased] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
   const showNotif = (msg: string) => {
@@ -142,9 +141,8 @@ export default function FieldStoreScreen() {
   };
 
   const handleBuyItem = (item: typeof CLAW_ITEMS[0]) => {
-    const success = purchaseWithClaws(item.cost);
+    const success = purchaseWithClaws(item.cost, item.id);
     if (success) {
-      setPurchased(p => [...p, item.id]);
       showNotif(`${item.label} - ready for next run!`);
     } else {
       showNotif('Not enough Claws!');
@@ -289,7 +287,7 @@ export default function FieldStoreScreen() {
               Items available at start of your next run. Paid with Claws.
             </RetroText>
             {CLAW_ITEMS.map(item => {
-              const alreadyBought = purchased.includes(item.id);
+              const alreadyBought = meta.startingItems.includes(item.id);
               const canAfford = meta.claws >= item.cost;
 
               return (

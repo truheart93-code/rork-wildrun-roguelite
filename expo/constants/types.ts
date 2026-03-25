@@ -133,4 +133,5 @@ export interface MetaState {
   journal: string[];
   totalCriticalHits: number;
   longestWinStreak: number;
+  startingItems: string[];
 }

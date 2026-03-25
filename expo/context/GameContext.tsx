@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
-import { Animal, AnimalTemplate, BattleState, DamageNumber, MetaState, RunState, RunStats, Upgrades } from '@/constants/types';
+import { Animal, AnimalTemplate, BattleState, DamageNumber, MetaState, RunState, RunStats, Upgrades, ItemInstance } from '@/constants/types';
 import { getStarterAnimals, ANIMALS, getAbilityForAnimal } from '@/constants/animals';
-import { getRandomItem } from '@/constants/items';
+import { getRandomItem, ITEM_TEMPLATES } from '@/constants/items';
 import { createAnimalFromTemplate, createEnemyAnimal, generateDungeon, calculateDamage, calculateCatchChance, rollCatch, generateUniqueId } from '@/utils/gameUtils';
 
 const DEFAULT_STATS: RunStats = {
@@ -35,6 +35,7 @@ const DEFAULT_META: MetaState = {
   journal: [],
   totalCriticalHits: 0,
   longestWinStreak: 0,
+  startingItems: [],
 };
 
 const DEFAULT_RUN: RunState = {
@@ -96,14 +97,33 @@ function useGameState() {
   const startNewRun = useCallback(() => {
     const newStarters = getStarterAnimals();
     setStarters(newStarters);
+    
+    // Convert purchased items to actual items
+    const startingInventory: ItemInstance[] = [];
+    meta.startingItems.forEach(itemId => {
+      if (itemId === 'buy_potion') {
+        // 2x Potions
+        startingInventory.push({ ...ITEM_TEMPLATES[0], uniqueId: generateUniqueId() });
+        startingInventory.push({ ...ITEM_TEMPLATES[0], uniqueId: generateUniqueId() });
+      } else if (itemId === 'buy_mega_potion') {
+        startingInventory.push({ ...ITEM_TEMPLATES[1], uniqueId: generateUniqueId() });
+      } else if (itemId === 'buy_revival') {
+        startingInventory.push({ ...ITEM_TEMPLATES[6], uniqueId: generateUniqueId() });
+      } else if (itemId === 'buy_smoke') {
+        startingInventory.push({ ...ITEM_TEMPLATES[4], uniqueId: generateUniqueId() });
+      }
+    });
+    
     setRun({
       ...DEFAULT_RUN,
       isActive: true,
       bondAttemptsRemaining: meta.upgrades.bondAttempts,
+      items: startingInventory,
       stats: { ...DEFAULT_STATS },
     });
     setBattle(null);
-    saveMeta({ ...meta, totalRuns: meta.totalRuns + 1 });
+    // Clear starting items after using them
+    saveMeta({ ...meta, totalRuns: meta.totalRuns + 1, startingItems: [] });
   }, [meta, saveMeta]);
 
   const rerollStarters = useCallback(() => { setStarters(getStarterAnimals()); }, []);
@@ -742,16 +762,25 @@ function useGameState() {
   }, [meta, run.floorsCleared, run.stats, run.claws, saveMeta]);
 
   const purchaseUpgrade = useCallback((type: keyof Upgrades) => {
-    const costs: Record<keyof Upgrades, number[]> = { squadSize: [20, 999], bondAttempts: [10, 20, 35, 999], atkBonus: [8, 15, 25, 40, 999], hpBonus: [8, 15, 25, 40, 999] };
+    const costs: Record<keyof Upgrades, number[]> = { 
+      squadSize: [3, 999], // Was 20, now 3!
+      bondAttempts: [2, 4, 7, 12, 18, 999], // Was 10,20,35, now way cheaper with more tiers
+      atkBonus: [2, 3, 5, 8, 12, 17, 23, 30, 999], // Was 8,15,25,40, now way more upgrades
+      hpBonus: [2, 3, 5, 8, 12, 17, 23, 30, 999] // Was 8,15,25,40, now way more upgrades
+    };
     const cost = costs[type][meta.upgrades[type]] ?? 999;
     if (meta.skulls < cost) return false;
     saveMeta({ ...meta, skulls: meta.skulls - cost, upgrades: { ...meta.upgrades, [type]: meta.upgrades[type] + 1 } });
     return true;
   }, [meta, saveMeta]);
 
-  const purchaseWithClaws = useCallback((cost: number) => {
+  const purchaseWithClaws = useCallback((cost: number, itemId?: string) => {
     if (meta.claws < cost) return false;
-    saveMeta({ ...meta, claws: meta.claws - cost });
+    const updates: Partial<MetaState> = { claws: meta.claws - cost };
+    if (itemId) {
+      updates.startingItems = [...meta.startingItems, itemId];
+    }
+    saveMeta({ ...meta, ...updates });
     return true;
   }, [meta, saveMeta]);
 
