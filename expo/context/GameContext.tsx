@@ -113,9 +113,13 @@ function useGameState() {
       if (prev.squad.length >= meta.upgrades.squadSize) return prev;
       if (prev.squad.find(a => a.id === template.id)) return prev;
       const animal = createAnimalFromTemplate(template, meta.upgrades);
+      // Add to journal when selecting starter
+      if (!meta.journal.includes(template.id)) {
+        saveMeta({ ...meta, journal: [...meta.journal, template.id] });
+      }
       return { ...prev, squad: [...prev.squad, animal] };
     });
-  }, [meta.upgrades]);
+  }, [meta.upgrades, meta.journal, saveMeta]);
 
   const removeStarter = useCallback((uniqueId: string) => {
     setRun(prev => ({ ...prev, squad: prev.squad.filter(a => a.uniqueId !== uniqueId) }));
@@ -303,7 +307,15 @@ function useGameState() {
 
       grantXp(battle.activeSquadIndex, xpEarned);
 
-      if (skullsEarned > 0) saveMeta({ ...meta, skulls: meta.skulls + skullsEarned, totalCriticalHits: meta.totalCriticalHits + (isCrit ? 1 : 0) });
+      // Save claws and skulls to meta immediately
+      const metaUpdate: Partial<MetaState> = {
+        claws: meta.claws + clawsEarned,
+      };
+      if (skullsEarned > 0) {
+        metaUpdate.skulls = meta.skulls + skullsEarned;
+        metaUpdate.totalCriticalHits = (meta.totalCriticalHits ?? 0) + (isCrit ? 1 : 0);
+      }
+      saveMeta({ ...meta, ...metaUpdate });
 
       const msgs = [`${attacker.name} dealt ${dmgToEnemy} damage!${isCrit ? ' CRITICAL HIT!' : ''}`, `${battle.enemy.name} was defeated!`];
       if (newCombo >= 3) msgs.push(`🔥 ${newCombo}-hit combo!`);
@@ -420,7 +432,12 @@ function useGameState() {
           successfulBonds: prev.stats.successfulBonds + 1,
         },
       }));
-      saveMeta({ ...meta, journal: meta.journal.includes(battle.enemy.id) ? meta.journal : [...meta.journal, battle.enemy.id] });
+      // Save claws to meta and add to journal
+      saveMeta({ 
+        ...meta, 
+        claws: meta.claws + clawsEarned,
+        journal: meta.journal.includes(battle.enemy.id) ? meta.journal : [...meta.journal, battle.enemy.id] 
+      });
       setBattle(prev => prev ? {
         ...prev,
         messages: [...prev.messages, `Bond attempt... ${chance}% chance...`, `${prev.enemy.name} was caught!${canAddToSquad ? ' Joins your squad!' : ' Logged in journal.'}`],
@@ -697,7 +714,10 @@ function useGameState() {
     const skullsEarned = Math.random() < 0.3 ? Math.floor(Math.random() * 3) + 1 : 0;
     const item = Math.random() < 0.6 ? getRandomItem() : null;
     setRun(prev => ({ ...prev, claws: prev.claws + clawsEarned, items: item ? [...prev.items, { ...item, uniqueId: generateUniqueId() }] : prev.items }));
-    if (skullsEarned > 0) saveMeta({ ...meta, skulls: meta.skulls + skullsEarned });
+    // Save claws and skulls to meta
+    const metaUpdate: Partial<MetaState> = { claws: meta.claws + clawsEarned };
+    if (skullsEarned > 0) metaUpdate.skulls = meta.skulls + skullsEarned;
+    saveMeta({ ...meta, ...metaUpdate });
     return { clawsEarned, skullsEarned, item };
   }, [meta, saveMeta]);
 
@@ -729,6 +749,12 @@ function useGameState() {
     return true;
   }, [meta, saveMeta]);
 
+  const purchaseWithClaws = useCallback((cost: number) => {
+    if (meta.claws < cost) return false;
+    saveMeta({ ...meta, claws: meta.claws - cost });
+    return true;
+  }, [meta, saveMeta]);
+
   const getUpgradeCost = useCallback((type: keyof Upgrades) => {
     const costs: Record<keyof Upgrades, number[]> = { squadSize: [20, 999], bondAttempts: [10, 20, 35, 999], atkBonus: [8, 15, 25, 40, 999], hpBonus: [8, 15, 25, 40, 999] };
     return costs[type][meta.upgrades[type]] ?? 999;
@@ -740,7 +766,7 @@ function useGameState() {
     enterBiome, enterRoom, leaveRoom, completeRoom, completeBiomeFloor,
     attack, bond, swapAnimal, useItem, useAbility,
     restSquad, collectTreasure, endRun,
-    purchaseUpgrade, getUpgradeCost,
+    purchaseUpgrade, purchaseWithClaws, getUpgradeCost,
     setBattle, grantXp,
   };
 }

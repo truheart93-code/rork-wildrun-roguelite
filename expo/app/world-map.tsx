@@ -50,7 +50,7 @@ export default function WorldMapScreen() {
           WORLD MAP
         </RetroText>
         <RetroText variant="body" color={COLORS.gray} style={styles.subtitle}>
-          Floor {run.currentFloor} â Choose your next biome
+          Floor {run.currentFloor} - Choose your next biome
         </RetroText>
       </View>
 

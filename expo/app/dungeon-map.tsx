@@ -188,40 +188,6 @@ export default function DungeonMapScreen() {
         contentContainerStyle={[styles.mapContent, { height: mapHeight }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Connector lines */}
-        <Svg
-          width={MAP_CONTENT_WIDTH}
-          height={mapHeight}
-          style={StyleSheet.absoluteFill}
-        >
-          {run.dungeonRooms.map(room =>
-            room.connections.map(targetId => {
-              const from = posMap.get(room.id);
-              const to = posMap.get(targetId);
-              if (!from || !to) return null;
-
-              const fromVisited = room.status === 'visited';
-              const toStatus = run.dungeonRooms.find(r => r.id === targetId)?.status;
-              const isActive = fromVisited && (toStatus === 'available' || toStatus === 'visited' || toStatus === 'current');
-              const lineColor = isActive ? biomeColor + '80' : '#1a1e1c';
-
-              return (
-                <Line
-                  key={`${room.id}-${targetId}`}
-                  x1={from.x}
-                  y1={from.y}
-                  x2={to.x}
-                  y2={to.y}
-                  stroke={lineColor}
-                  strokeWidth={isActive ? 2.5 : 1.5}
-                  strokeLinecap="round"
-                  {...(isActive ? {} : { strokeDasharray: '4,4' })}
-                />
-              );
-            })
-          )}
-        </Svg>
-
         {/* Room nodes */}
         {nodePositions.map(({ x, y, room }) => {
           const isAvailable = room.status === 'available';

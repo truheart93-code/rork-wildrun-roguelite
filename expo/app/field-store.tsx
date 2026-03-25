@@ -125,7 +125,7 @@ const CLAW_ITEMS = [
 export default function FieldStoreScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { meta, run, purchaseUpgrade, getUpgradeCost } = useGame();
+  const { meta, run, purchaseUpgrade, purchaseWithClaws, getUpgradeCost } = useGame();
   const [activeTab, setActiveTab] = useState<'upgrades' | 'supplies'>('upgrades');
   const [purchased, setPurchased] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
@@ -142,13 +142,13 @@ export default function FieldStoreScreen() {
   };
 
   const handleBuyItem = (item: typeof CLAW_ITEMS[0]) => {
-    if (run.claws < item.cost) {
+    const success = purchaseWithClaws(item.cost);
+    if (success) {
+      setPurchased(p => [...p, item.id]);
+      showNotif(`${item.label} - ready for next run!`);
+    } else {
       showNotif('Not enough Claws!');
-      return;
     }
-    // Track purchased (actual item injection would be in GameContext)
-    setPurchased(p => [...p, item.id]);
-    showNotif(`${item.label} - ready for next run!`);
   };
 
   return (
@@ -182,7 +182,7 @@ export default function FieldStoreScreen() {
         <View style={styles.currencyChip}>
           <RetroText variant="heading" color={COLORS.whiteDim} style={styles.currencyIcon}>⚡</RetroText>
           <RetroText variant="heading" color={COLORS.whiteDim} style={styles.currencyValue}>
-            {run.claws}
+            {meta.claws}
           </RetroText>
           <RetroText variant="label" color={COLORS.grayDark} style={styles.currencyLabel}>CLAWS</RetroText>
         </View>
@@ -290,7 +290,7 @@ export default function FieldStoreScreen() {
             </RetroText>
             {CLAW_ITEMS.map(item => {
               const alreadyBought = purchased.includes(item.id);
-              const canAfford = run.claws >= item.cost;
+              const canAfford = meta.claws >= item.cost;
 
               return (
                 <View key={item.id} style={[styles.upgradeCard, alreadyBought && styles.cardBought]}>
