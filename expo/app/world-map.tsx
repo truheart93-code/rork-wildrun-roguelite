@@ -11,9 +11,9 @@ import { Lock, ChevronRight, Map } from 'lucide-react-native';
 
 
 const BIOME_LORE: Record<string, string> = {
-  savanna: "Vast open plains where speed and strength rule. Lions, cheetahs, and elephants compete for dominance. Dr. Wren's Tip: bring fast creatures - slow ones get left behind.",
+  savanna: "Vast open plains where speed and strength rule. Lions, cheetahs, and elephants compete for dominance. Dr. Wren's Tip: bring fast creatures — slow ones get left behind.",
   ocean: "The deep holds ancient creatures with high HP and surprising intelligence. Orcas coordinate attacks. Dr. Wren's Tip: high DEF animals survive here longer.",
-  jungle: "Dense canopy where poison and ambush tactics thrive. Visibility is low, danger is high. Dr. Wren's Tip: Anacondas and frogs use status effects - plan around them.",
+  jungle: "Dense canopy where poison and ambush tactics thrive. Visibility is low, danger is high. Dr. Wren's Tip: Anacondas and frogs use status effects — plan around them.",
   arctic: "Frozen tundra where only the toughest survive. Bosses here stun and freeze. Dr. Wren's Tip: bring a healer or high-SPD creature to act first.",
 };
 export default function WorldMapScreen() {
@@ -50,7 +50,7 @@ export default function WorldMapScreen() {
           WORLD MAP
         </RetroText>
         <RetroText variant="body" color={COLORS.gray} style={styles.subtitle}>
-          Floor {run.currentFloor} - Choose your next biome
+          Floor {run.currentFloor} â Choose your next biome
         </RetroText>
       </View>
 
@@ -128,14 +128,14 @@ export default function WorldMapScreen() {
             </RetroText>
             <View style={styles.loreBtns}>
               <TouchableOpacity style={styles.loreCancelBtn} onPress={() => setLoreBiome(null)} activeOpacity={0.8}>
-                <RetroText variant="label" color={COLORS.gray} style={{ fontSize: 11 }}>BACK</RetroText>
+                <RetroText variant="label" color={COLORS.gray} style={{ fontSize: 9 }}>BACK</RetroText>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.loreEnterBtn, { backgroundColor: COLORS[loreBiome as keyof typeof COLORS] ?? COLORS.green }]}
                 onPress={() => confirmEnterBiome(BIOMES.findIndex(b => b.type === loreBiome))}
                 activeOpacity={0.8}
               >
-                <RetroText variant="label" color={COLORS.bg} style={{ fontSize: 12 }}>ENTER BIOME →</RetroText>
+                <RetroText variant="label" color={COLORS.bg} style={{ fontSize: 9 }}>ENTER BIOME →</RetroText>
               </TouchableOpacity>
             </View>
           </View>
@@ -224,55 +224,5 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgLight,
     borderTopWidth: 1,
     borderTopColor: '#1a1e1c',
-  },
-  loreOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loreModal: {
-    backgroundColor: COLORS.bgCard,
-    borderRadius: 16,
-    padding: 24,
-    width: '100%',
-    maxWidth: 400,
-    gap: 16,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  loreTitle: {
-    fontSize: 16,
-    textAlign: 'center',
-  },
-  loreText: {
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: 'center',
-  },
-  loreBtns: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
-  },
-  loreCancelBtn: {
-    flex: 1,
-    backgroundColor: COLORS.bgLight,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.grayDark,
-  },
-  loreEnterBtn: {
-    flex: 2,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
   },
 });

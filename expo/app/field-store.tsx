@@ -125,8 +125,9 @@ const CLAW_ITEMS = [
 export default function FieldStoreScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { meta, run, purchaseUpgrade, purchaseWithClaws, getUpgradeCost } = useGame();
+  const { meta, run, purchaseUpgrade, getUpgradeCost } = useGame();
   const [activeTab, setActiveTab] = useState<'upgrades' | 'supplies'>('upgrades');
+  const [purchased, setPurchased] = useState<string[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
   const showNotif = (msg: string) => {
@@ -141,12 +142,13 @@ export default function FieldStoreScreen() {
   };
 
   const handleBuyItem = (item: typeof CLAW_ITEMS[0]) => {
-    const success = purchaseWithClaws(item.cost, item.id);
-    if (success) {
-      showNotif(`${item.label} - ready for next run!`);
-    } else {
+    if (run.claws < item.cost) {
       showNotif('Not enough Claws!');
+      return;
     }
+    // Track purchased (actual item injection would be in GameContext)
+    setPurchased(p => [...p, item.id]);
+    showNotif(`${item.label} — ready for next run!`);
   };
 
   return (
@@ -164,7 +166,7 @@ export default function FieldStoreScreen() {
 
       {/* Dr. Wren tagline */}
       <RetroText variant="body" color={COLORS.grayDark} style={styles.tagline}>
-        "Invest in your research. The wilderness won't wait." - Dr. Wren
+        "Invest in your research. The wilderness won't wait." — Dr. Wren
       </RetroText>
 
       {/* Currency display */}
@@ -180,7 +182,7 @@ export default function FieldStoreScreen() {
         <View style={styles.currencyChip}>
           <RetroText variant="heading" color={COLORS.whiteDim} style={styles.currencyIcon}>⚡</RetroText>
           <RetroText variant="heading" color={COLORS.whiteDim} style={styles.currencyValue}>
-            {meta.claws}
+            {run.claws}
           </RetroText>
           <RetroText variant="label" color={COLORS.grayDark} style={styles.currencyLabel}>CLAWS</RetroText>
         </View>
@@ -287,8 +289,8 @@ export default function FieldStoreScreen() {
               Items available at start of your next run. Paid with Claws.
             </RetroText>
             {CLAW_ITEMS.map(item => {
-              const alreadyBought = meta.startingItems.includes(item.id);
-              const canAfford = meta.claws >= item.cost;
+              const alreadyBought = purchased.includes(item.id);
+              const canAfford = run.claws >= item.cost;
 
               return (
                 <View key={item.id} style={[styles.upgradeCard, alreadyBought && styles.cardBought]}>

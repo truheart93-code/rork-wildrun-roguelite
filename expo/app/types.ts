@@ -85,6 +85,7 @@ export interface DamageNumber {
   isCrit?: boolean;
 }
 
+// Detailed run statistics for Dr. Wren debrief
 export interface RunStats {
   floorsCleared: number;
   animalsCaught: number;

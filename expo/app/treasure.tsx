@@ -15,7 +15,7 @@ const FIELD_NOTES = [
   { title: 'Defensive Posture', note: 'Prey animals shield their young. Use that instinct against them.' },
   { title: 'Migration Data', note: 'Animals weaken when far from their native biome. Use terrain.' },
   { title: 'Bonding Theory', note: "Lower HP = higher bond rate. Patience is the researcher's greatest weapon." },
-  { title: 'Alpha Dynamics', note: 'Bosses have a tell - they always strike hardest when cornered.' },
+  { title: 'Alpha Dynamics', note: 'Bosses have a tell — they always strike hardest when cornered.' },
   { title: 'Speed Observations', note: 'The fastest animal always strikes first. Never underestimate SPD.' },
 ];
 
@@ -138,7 +138,7 @@ export default function TreasureScreen() {
                   <RetroText variant="bodyBold" color={COLORS.green} style={styles.notesTitle}>{fieldNote.title}</RetroText>
                 </View>
                 <RetroText variant="body" color={COLORS.whiteDim} style={styles.notesText}>"{fieldNote.note}"</RetroText>
-                <RetroText variant="label" color={COLORS.grayDark} style={styles.notesAttrib}>- Dr. Wren</RetroText>
+                <RetroText variant="label" color={COLORS.grayDark} style={styles.notesAttrib}>— Dr. Wren</RetroText>
               </View>
               <View style={styles.rewardRow}>
                 <View style={styles.rewardItem}>

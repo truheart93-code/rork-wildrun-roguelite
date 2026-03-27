@@ -9,13 +9,13 @@ import AnimalSilhouette from '@/components/AnimalSilhouette';
 const { width: W } = Dimensions.get('window');
 
 const DIALOGUE = [
-  { speaker: 'DR. WREN', text: "Ah, you're finally here. I'm Dr. Wren - field biologist, naturalist, and apparently the only person willing to venture into these territories.", highlight: null },
+  { speaker: 'DR. WREN', text: "Ah, you're finally here. I'm Dr. Wren — field biologist, naturalist, and apparently the only person willing to venture into these territories.", highlight: null },
   { speaker: 'DR. WREN', text: "We've detected unusual creature activity across four biomes: Savanna, Ocean, Jungle, and Arctic. Each is teeming with wild animals that have never been properly catalogued.", highlight: 'four biomes' },
-  { speaker: 'DR. WREN', text: "Your mission is to travel through these biomes, fight wild creatures to weaken them, then attempt to Bond with them - forming a partnership to join your squad.", highlight: 'Bond' },
-  { speaker: 'DR. WREN', text: "Each biome is a dungeon - a series of rooms. Fight rooms, Catch rooms, Rest camps, Treasure chests, and at the top... a Boss.", highlight: 'Boss' },
+  { speaker: 'DR. WREN', text: "Your mission is to travel through these biomes, fight wild creatures to weaken them, then attempt to Bond with them — forming a partnership to join your squad.", highlight: 'Bond' },
+  { speaker: 'DR. WREN', text: "Each biome is a dungeon — a series of rooms. Fight rooms, Catch rooms, Rest camps, Treasure chests, and at the top... a Boss.", highlight: 'Boss' },
   { speaker: 'DR. WREN', text: "Build a squad of up to 3 creatures. Each has unique HP, Attack, Defense, and Speed stats. A well-balanced squad is the difference between glory and defeat.", highlight: null },
-  { speaker: 'DR. WREN', text: "When your creatures fall in battle and none remain standing - the run ends. But you'll earn Skulls, our research currency, to permanently upgrade for the next run.", highlight: 'Skulls' },
-  { speaker: 'DR. WREN', text: "Every creature you bond with gets added to the Field Journal - a living record of our discoveries. Fill it completely and you'll have catalogued every known species.", highlight: 'Field Journal' },
+  { speaker: 'DR. WREN', text: "When your creatures fall in battle and none remain standing — the run ends. But you'll earn Skulls, our research currency, to permanently upgrade for the next run.", highlight: 'Skulls' },
+  { speaker: 'DR. WREN', text: "Every creature you bond with gets added to the Field Journal — a living record of our discoveries. Fill it completely and you'll have catalogued every known species.", highlight: 'Field Journal' },
   { speaker: 'DR. WREN', text: "The wilderness is unforgiving. But science waits for no one. Good luck out there, researcher. The animals are counting on us to understand them.", highlight: null },
 ];
 
